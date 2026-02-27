@@ -1,13 +1,17 @@
 /* Lexer */
 %lex
+entero \d+
+mantisa \.[0-9]+
+exponente [eE][+-]?[0-9]+
 %%
-\s+                                   { /* skip whitespace */;       }
-\/\/[^\n]*                            { /* skip one line comments*/; }
-[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?   { return 'NUMBER';             }
-"**"                                  { return 'OP';                 }
-[-+*/]                                { return 'OP';                 }
-<<EOF>>                               { return 'EOF';                }
-.                                     { return 'INVALID';            }
+\s+                                   { /* skip whitespace */;        }
+\/\/[^\n]*                            { /* skip one line comments*/;  }
+\/\*(.|\n)*?(\*\/)                    { /* skip multiline comments */ }
+{entero}{mantisa}?{exponente}?        { return 'NUMBER';              }
+"**"                                  { return 'OP';                  }
+[-+*/]                                { return 'OP';                  }
+<<EOF>>                               { return 'EOF';                 }
+.                                     { return 'INVALID';             }
 /lex
 
 /* Parser */

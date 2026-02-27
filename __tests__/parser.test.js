@@ -168,6 +168,10 @@ describe('Parser Tests', () => {
       expect(parse('2.5e-2')).toBeCloseTo(0.025);
       expect(parse('3.14e2')).toBe(314);
     })
+
+    test('should handle errors in floating point numbers', () => {
+      expect(() => parse('3.e*58')).toThrow();
+    })
   })
 
 });
