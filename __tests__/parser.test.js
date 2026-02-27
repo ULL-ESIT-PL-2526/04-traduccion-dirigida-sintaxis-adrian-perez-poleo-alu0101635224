@@ -110,7 +110,6 @@ describe('Parser Tests', () => {
       expect(() => parse("3 +")).toThrow();
       expect(() => parse("+ 3")).toThrow();
       expect(() => parse("3 + + 4")).toThrow();
-      expect(() => parse("3.5")).toThrow(); // Only integers are supported
     });
 
     test('should handle incomplete expressions', () => {
@@ -127,5 +126,48 @@ describe('Parser Tests', () => {
       expect(parse("7 - 5 - 1")).toBe(1);
     });
   });
+
+  describe('Comments tests', () => {
+    test('should ignore one line comments', () => {
+      const input = '// Esto es un comentario introductorio\n' +
+                    '10 + 5 + 3';
+      expect(parse(input)).toBe(18);
+
+      const inlineCommentInput = '15 / 3   // Esto es una división';
+      expect(parse(inlineCommentInput)).toBe(5);
+
+      const endingCommentInput = '58 - 8\n' +
+                                 '// Final de la cadena.';
+      expect(parse(endingCommentInput)).toBe(50);
+    })
+  })
+
+  describe('Floating point numbers tests', () => {
+    test('should parse floating point numbers', () => {
+      expect(parse('3.14')).toBe(3.14);
+      expect(parse('0.001')).toBeCloseTo(0.001);
+      expect(parse('2.71828')).toBeCloseTo(2.71828);
+    })
+
+    test('should handle operations with floating point numbers', () => {
+      expect(parse('1.5 + 2.5')).toBe(4);
+      expect(parse('5.0 - 3.2')).toBeCloseTo(1.8);
+      expect(parse('2.5 * 4.0')).toBe(10);
+      expect(parse('1e2 / 4.0')).toBe(25);
+    })
+
+    test('should handle operations with floating point numbersand exponents', () => {
+      expect(parse('2.0 ** 3.0')).toBe(8);
+      expect(parse('3.0 ** 2.0')).toBe(9);
+      expect(parse('5.0 ** 0.0')).toBe(1);
+      expect(parse('10.0 ** 1.0')).toBe(10);
+    })
+
+    test('should handle exponents in floating point numbers', () => {
+      expect(parse('1e3')).toBe(1000);
+      expect(parse('2.5e-2')).toBeCloseTo(0.025);
+      expect(parse('3.14e2')).toBe(314);
+    })
+  })
 
 });
