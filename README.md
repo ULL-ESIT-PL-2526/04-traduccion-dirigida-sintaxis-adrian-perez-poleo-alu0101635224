@@ -11,7 +11,7 @@
 ## 2. CONTEXTO
 
 Esta práctica se enmarca dentro de la asignatura Procesadores de Lenguajes, en el tercer curso de Ingeniería Informática en la Universidad de La Laguna.
-Pretende ser una introducción a la herramienta `jison` con la que se pueden crear analizadores sintácticos.
+Pretende ser una introducción a la implementación de una definición dirigida a la sintaxis (_SDD_) utilizando `Jison`. Además, también se introduce la generación de test unitarios para verificar nuestro programa.
 
 ---
 ## 3. METODOLOGÍA
@@ -23,6 +23,27 @@ Pretende ser una introducción a la herramienta `jison` con la que se pueden cre
 
 ---
 ## 4. DESARROLLO
+En primer lugar se ejecutaron las instrucciones básicas para compilar el programa y poder ejecutarlo:
+### Compilación
+```bash
+➜  jison git:(main) ✗ npx jison grammar.jison -o parser.js
+```
+### Ejecución
+```bash
+➜  jison git:(main) ✗ node                                
+Welcome to Node.js v25.6.0.
+Type ".help" for more information.
+> p = require("./parser.js")
+{
+  parser: { yy: {} },
+  Parser: [Function: Parser],
+  parse: [Function (anonymous)],
+  main: [Function: commonjsMain]
+}
+> p.parse("2*3")
+6
+```
+
 A continuación se da respuesta a las preguntas planteadas en el ejercicio número 2 de la práctica. Para una mayor comprensión, se muestra un fragmento del fichero `grammar.jison`:
 ```jison
 /* Lexer */
@@ -58,3 +79,6 @@ La regla `.` es necesaria para asegurarnos de que todos los caracteres que no so
 ## 5. Resultados
 - El proyecto se ha configurado correctamente
 - Se ha respondido de forma satisfactoria a las preguntas planteadas sobre el fragmento de código.
+- Se ha añadido la capacidad de ignorar comentarios de una sola línea al analizador sintáctico (el analizador léxico no devuelve token)
+- Se ha añadido la posibilidad de realizar operaciones con números en punto flotante.
+- Se han implementado numerosas pruebas que verifican el correcto funcionamiento de lo ya mencionado.
