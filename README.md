@@ -28,7 +28,7 @@ Esta práctica se enmarca dentro de la asignatura Procesadores de Lenguajes. Su 
 ---
 ## 4. DESARROLLO
 
-En primer lugar, se procede a detallar la derivación de las siguientes frases, junto con su respectivo árbol de análisis sintáctica (_parse tree_).
+En primer lugar, se procede a detallar la derivación de las siguientes frases, junto con su respectivo árbol de análisis sintáctica (_parse tree_). Se han añadido los valores numericos en el árbol con el objetivo de ilustrar con mayor claridad el orden de ejecución de las operaciones.
 - 4.0-2.0*3.0
 - 2\*\*3\*\*2
 - 7-4/2
@@ -44,10 +44,12 @@ $ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Right
      E  op  T
    / | \    |
   E  op  T  number
-  |      |
-  T    number
+  |      |      \
+  T    number   3.0
+  |       \
+number     2.0
   |
-number
+ 4.0
 
 ```
 
@@ -64,16 +66,19 @@ $ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Right
      E  op  T
    / | \    |
   E  op  T  number
-  |      |
-  T    number
+  |      |      \
+  T    number    2
+  |       \
+number     3
   |
-number
+  2
 
 ```
 Una vez más, evaluamos de izquierda a derecha de forma ascendente. Primero se realiza `2**3` para posteriormente, operar `8**2` que es `64`. Sin embargo, la operación debería haber sido primero `3**2` para luego elevarlo a `2` resutando en `512`.
 
 ### Frase número 3: `7-4/2`
 $ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Rightarrow E_1 \text{ op } T \text{ op } T \text{ eof } \Rightarrow T \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } number \text{ eof } $
+
 ```text
            L
          /   \
@@ -82,10 +87,12 @@ $ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Right
      E  op  T
    / | \    |
   E  op  T  number
-  |      |
-  T    number
+  |      |      \
+  T    number    2
+  |       \
+number     4
   |
-number
+  7
 
 ```
 
