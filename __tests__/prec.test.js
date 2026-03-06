@@ -46,3 +46,52 @@ describe('Parser Failing Tests', () => {
   });
 
 });
+
+describe('Floating Point precedence and error Tests', () => {
+
+  describe('Precedence and associativity tests with floating-point numbers', () => {
+    test('should calculate multiplication and division before addition and subtraction', () => {
+      expect(parse("2.5 + 3.0 * 4.2")).toBeCloseTo(15.1);   // 2.5 + 3.0 * 4.2 = 15.1
+      expect(parse("10.5 - 6.0 / 2.0")).toBeCloseTo(7.5);   // 10.5 - 6.0 / 2.0 = 7.5
+      expect(parse("5.2 * 2.0 + 3.1")).toBeCloseTo(13.5);   // 5.2 * 2.0 + 3.1 = 13.5
+    });
+
+    test('should evaluate exponentiation with the highest precedence', () => {
+      expect(parse("2.5 + 3.0 ** 2.0")).toBeCloseTo(11.5);  // 2.5 + 3.0 ** 2.0 = 11.5
+      expect(parse("2.5 * 2.0 ** 3.0")).toBeCloseTo(20.0);  // 2.5 * 2.0 ** 3.0 = 20.0
+      expect(parse("10.5 - 2.0 ** 3.0")).toBeCloseTo(2.5);  // 10.5 - 2.0 ** 3.0 = 2.5
+    });
+
+    test('should maintain right associativity for exponentiation', () => {
+      expect(parse("2.0 ** 3.0 ** 2.0")).toBeCloseTo(512.0);  // 2.0 ** 3.0 ** 2.0 = 512.0
+      expect(parse("1.5 ** 2.0 ** 2.0")).toBeCloseTo(5.0625); // 1.5 ** 2.0 ** 2.0 = 5.0625
+    });
+
+    test('should maintain left associativity for subtraction and division', () => {
+      expect(parse("10.0 - 5.0 - 2.0")).toBeCloseTo(3.0);         // 10.0 - 5.0 - 2.0 = 3.0
+      expect(parse("20.0 / 2.0 / 2.0")).toBeCloseTo(5.0);         // 20.0 / 2.0 / 2.0 = 5.0
+      expect(parse("10.0 + 5.0 - 3.0 + 2.0")).toBeCloseTo(14.0);  // 10.0 + 5.0 - 3.0 + 2.0 = 14.0
+    });
+
+    test('should handle mixed expressions', () => {
+      expect(parse("1.5 + 2.0 * 3.5 - 4.0")).toBeCloseTo(4.5);   // 1.5 + 2.0 * 3.5 - 4.0 = 4.5
+      expect(parse("15.0 / 3.0 + 2.5 * 4.0")).toBeCloseTo(15.0); // 15.0 / 3.0 + 2.5 * 4.0 = 15.0
+      expect(parse("2.0 ** 3.0 + 1.5")).toBeCloseTo(9.5);        // 2.0 ** 3.0 + 1.5 = 9.5
+    });
+  });
+
+  describe('Error handling tests (invalid cases)', () => {
+    test('should throw an error with invalid characters (lexical errors)', () => {
+      expect(() => parse("2.5 + a")).toThrow();   // Should throw an error (letter 'a')
+      expect(() => parse("10 @ 2")).toThrow();    // Should throw an error (symbol '@')
+      expect(() => parse("3.0 & 4.0")).toThrow(); // Should throw an error (symbol '&')
+    });
+
+    test('should throw an error with misplaced or consecutive operators', () => {
+      expect(() => parse("2.0 + * 3.0")).toThrow();     // Should throw an error (+ *)
+      expect(() => parse("2.0 + + 3.0")).toThrow();     // Should throw an error (+ +)
+      expect(() => parse("2.5 +")).toThrow();           // Should throw an error (missing final number)
+    });
+  });
+
+});
