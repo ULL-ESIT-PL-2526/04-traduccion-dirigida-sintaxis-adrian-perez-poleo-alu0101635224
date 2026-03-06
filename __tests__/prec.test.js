@@ -95,3 +95,46 @@ describe('Floating Point precedence and error Tests', () => {
   });
 
 });
+
+describe('Parentheses Tests', () => {
+
+  describe('Correct use of parentheses', () => {
+    test('should prioritize addition/subtraction inside parentheses', () => {
+      expect(parse("( 2.0 + 3.0 ) * 4.0")).toBeCloseTo(20.0);    // (5.0) * 4.0 = 20.0
+      expect(parse("10.0 / ( 2.0 + 3.0 )")).toBeCloseTo(2.0);    // 10.0 / 5.0 = 2.0
+      expect(parse("( 10.5 - 5.5 ) * 2.0")).toBeCloseTo(10.0);   // 5.0 * 2.0 = 10.0
+    });
+  
+    test('should handle nested parentheses correctly', () => {
+      expect(parse("(( 2 + 3 ) * 2 ) ** 2.0")).toBeCloseTo(100.0);      // ((2 + 3) * 2) ** 2 = (5 * 2) ** 2 = 10 ** 2 = 100
+      expect(parse("50.0 / ( 2.0 * ( 2.0 + 3.0 ) )")).toBeCloseTo(5.0); // 50 / (2 * (2 + 3)) = 50 / (2 * 5) = 50 / 10 = 5
+    });
+  
+    test('should handle parentheses combined with exponentiation', () => {
+      expect(parse("( 2.0 ** 3.0 ) ** 2.0")).toBeCloseTo(64.0);        // (2 ** 3) ** 2 = 8 ** 2 = 64
+      expect(parse("2.0 ** 3.0 ** 2.0")).toBeCloseTo(512.0);           //  2 ** (3 ** 2) = 512
+    });
+  
+    test('should work with floating point and complex grouping', () => {
+      expect(parse("( 1.5 + 0.5 ) * ( 10.0 / ( 2.0 ** 2.0 ) )")).toBeCloseTo(5.0);   // (1.5 + 0.5) * (10.0 / (2.0 ** 2.0)) = 2.0 * (10.0 / 4.0) = 2.0 * 2.5 = 5.0
+    });
+  
+    test('should ignore comments around parentheses', () => {
+      const input = "( 2.0 + 3.0 ) // Adding numbers \n * 2.0 /* Multiplier */";
+      expect(parse(input)).toBeCloseTo(10.0); // (5.0) * 2.0 = 10.0
+    });
+  })
+
+  describe('Parentheses Order and Balance Errors', () => {
+
+    test('should throw error for unbalanced or mismatched parentheses', () => {
+      expect(() => parse(") 2.0 + 3.0 (")).toThrow();  // Should throw error: invalid order
+      expect(() => parse("5.0 + ( )")).toThrow();      // Should throw error: empty parentheses
+    });
+  
+    test('should throw error for incorrect nesting or missing parts', () => {
+      expect(() => parse("( 2.0 * ( 3.0 + 1.0 )) )")).toThrow(); // Should throw error: extra closing paren
+      expect(() => parse("2.0 + ( 3.0 * 4.0")).toThrow();        // Should throw error: missing closing paren
+    });
+});
+});
