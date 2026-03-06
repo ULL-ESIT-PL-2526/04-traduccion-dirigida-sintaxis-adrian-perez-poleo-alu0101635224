@@ -8,8 +8,9 @@ exponente [eE][+-]?[0-9]+
 \/\/[^\n]*                            { /* skip one line comments*/;  }
 \/\*(.|\n)*?(\*\/)                    { /* skip multiline comments */ }
 {entero}{mantisa}?{exponente}?        { return 'NUMBER';              }
-"**"                                  { return 'OP';                  }
-[-+*/]                                { return 'OP';                  }
+"**"                                  { return 'OPOW';                }
+[-+]                                  { return 'OPAD';                }
+[*/]                                  { return 'OPMU';                }
 <<EOF>>                               { return 'EOF';                 }
 .                                     { return 'INVALID';             }
 /lex
@@ -25,13 +26,27 @@ expressions
     ;
 
 expression
-    : expression OP term
-        { $$ = operate($OP, $expression, $term); }
+    : expression OPAD term
+        { $$ = operate($OPAD, $expression, $term); }
     | term
         { $$ = $term; }
     ;
 
 term
+    : term OPMU right
+        { $$ = operate($OPMU, $term, $right); }
+    | right
+        { $$ = $right; }
+    ;
+    
+right
+    : factor OPOW right
+        { $$ = operate($OPOW, $factor, $right); }
+    | factor
+        { $$ = $factor; }
+    ;
+
+factor
     : NUMBER
         { $$ = Number(yytext); }
     ;
