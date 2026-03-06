@@ -1,84 +1,136 @@
-# Práctica 04: Traducción didirigida por la sintaxis con Jison
+# Práctica 05: Traducción didirigida por la sintaxis con Jison
 
 ## Objetivos
-- **Implementar una SDD:** Desarrollar una calculadora funcional basada en una Definición Dirigida por la Sintaxis que asocie reglas semánticas a la gramática.
-- **Gestión de Atributos:** Utilizar el atributo `value` para almacenar y procesar los resultados de las operaciones aritméticas.
-- **Generación del Parser:** Emplear la herramienta **Jison** para transformar la especificación de la gramática en un analizador sintáctico ejecutable.
-- **Extensión del Lexer:** Modificar el bloque `%lex` para ignorar comentarios de una línea (`//`) y reconocer números en punto flotante y notación científica.
-- **Validación por Pruebas:** Asegurar la integridad del traductor mediante el framework **Jest**, añadiendo casos de prueba para las nuevas reglas léxicas.
+- **Analizar Derivaciones y Árboles Sintácticos:** Comprender cómo la gramática original evalúa las expresiones estrictamente de izquierda a derecha.
+
+- **Implementar Precedencia y Asociatividad:** Modificar la Definición Dirigida por la Sintaxis (SDD) para respetar el orden matemático de los operadores (`+`, `-`, `*`, `/`, `**`).
+
+- **Soporte de Paréntesis:** Extender el analizador léxico y sintáctico para reconocer y dar máxima prioridad a las expresiones agrupadas `( E )`.
+
+- **Validación por Pruebas (TDD):** Utilizar Jest para demostrar los fallos de la gramática inicial y verificar la corrección de las nuevas reglas semánticas con números enteros y de punto flotante.
 
 ---
 ## 2. CONTEXTO
 
-Esta práctica se enmarca dentro de la asignatura Procesadores de Lenguajes, en el tercer curso de Ingeniería Informática en la Universidad de La Laguna.
-Pretende ser una introducción a la implementación de una definición dirigida a la sintaxis (_SDD_) utilizando `Jison`. Además, también se introduce la generación de test unitarios para verificar nuestro programa.
+Esta práctica se enmarca dentro de la asignatura Procesadores de Lenguajes. Su propósito es profundizar en la implementación de una Definición Dirigida por la Sintaxis (SDD) utilizando la herramienta `Jison`. A diferencia de la práctica anterior, el enfoque central es la corrección de la precedencia y asociatividad de los operadores matemáticos, mostrando cómo el diseño de la gramática impacta en el orden de evaluación de las acciones semánticas.
 
 ---
 ## 3. METODOLOGÍA
 
-1. **Configuración del Entorno:** Instalación de las dependencias necesarias mediante `npm i` y generación inicial del parser con el comando `npx jison src/grammar.jison -o src/parser.js`.
-2. **Análisis y Modificación Léxica:** Edición del archivo `grammar.jison` para actualizar las expresiones regulares del lexer, permitiendo la detección de comentarios iniciados por `//` y formatos numéricos complejos (ej. `2.35e-3`).
-3. **Aplicación de Reglas Semánticas:** Vinculación de los tokens reconocidos con las funciones `convert` (para cadenas numéricas) y `operate` (para la ejecución de operaciones `+`, `-`, `*`, `/`, `**`).
-4. **Ciclo de Desarrollo y Testeo:** Ejecución recurrente de `npm test` para verificar la secuencia de tokens producidos y la validez de los resultados calculados frente a los cambios realizados.
+1. **Análisis:** Trazado manual de las derivaciones y árboles de análisis sintáctico de la gramática base para evidenciar su comportamiento estrictamente asociativo por la izquierda.
+
+2. **Desarrollo Guiado por Pruebas (TDD):** Inclusión de un conjunto de pruebas en Jest (prec.test.js) diseñado específicamente para fallar bajo la gramática original y servir como criterio de aceptación para las modificaciones.
+
+3. **Refactorización de la Gramática:** Modificación del archivo `grammar.jison` para introducir nuevos símbolos no terminales (`E`, `T`, `R`, `F`) y separar los operadores según su jerarquía (`opad`, `opmu`, `opow`).
+
+4. **Expansión del Analizador Léxico:** Adición de los tokens `(` y `)` para permitir la agrupación de subexpresiones.
 
 ---
 ## 4. DESARROLLO
-En primer lugar se ejecutaron las instrucciones básicas para compilar el programa y poder ejecutarlo:
-### Compilación
-```bash
-➜  jison git:(main) ✗ npx jison grammar.jison -o parser.js
+
+### 4.1 Resolución de ejercicios
+En primer lugar, se procede a detallar la derivación de las siguientes frases, junto con su respectivo árbol de análisis sintáctica (_parse tree_). Se han añadido los valores numericos en el árbol con el objetivo de ilustrar con mayor claridad el orden de ejecución de las operaciones.
+- 4.0-2.0*3.0
+- 2\*\*3\*\*2
+- 7-4/2
+
+#### Frase número 1: `4.0-2.0*3.0`
+$ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Rightarrow E_1 \text{ op } T \text{ op } T \text{ eof } \Rightarrow T \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } number \text{ eof } $
+
+```text
+           L
+         /   \
+        E     eof
+      / | \
+     E  op  T
+   / | \    |
+  E  op  T  number
+  |      |      \
+  T    number   3.0
+  |       \
+number     2.0
+  |
+ 4.0
+
 ```
-### Ejecución
-```bash
-➜  jison git:(main) ✗ node                                
-Welcome to Node.js v25.6.0.
-Type ".help" for more information.
-> p = require("./parser.js")
-{
-  parser: { yy: {} },
-  Parser: [Function: Parser],
-  parse: [Function (anonymous)],
-  main: [Function: commonjsMain]
-}
-> p.parse("2*3")
-6
+
+Primero se calcula `4.0 - 2.0` y al resultado, que es `2.0` se le multiplica el `3.0` dando como resultado `6.0`. Vemos que esto es incorrecto, pues el resultado debería ser `-2.0`. 
+
+#### Frase número 2: `2**3**2`
+$ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Rightarrow E_1 \text{ op } T \text{ op } T \text{ eof } \Rightarrow T \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } number \text{ eof } $
+
+```text
+           L
+         /   \
+        E     eof
+      / | \
+     E  op  T
+   / | \    |
+  E  op  T  number
+  |      |      \
+  T    number    2
+  |       \
+number     3
+  |
+  2
+
+```
+Una vez más, evaluamos de izquierda a derecha de forma ascendente. Primero se realiza `2**3` para posteriormente, operar `8**2` que es `64`. Sin embargo, la operación debería haber sido primero `3**2` para luego elevarlo a `2` resutando en `512`.
+
+#### Frase número 3: `7-4/2`
+$ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Rightarrow E_1 \text{ op } T \text{ op } T \text{ eof } \Rightarrow T \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } number \text{ eof } $
+
+```text
+           L
+         /   \
+        E     eof
+      / | \
+     E  op  T
+   / | \    |
+  E  op  T  number
+  |      |      \
+  T    number    2
+  |       \
+number     4
+  |
+  7
+
 ```
 
-A continuación se da respuesta a las preguntas planteadas en el ejercicio número 2 de la práctica. Para una mayor comprensión, se muestra un fragmento del fichero `grammar.jison`:
-```jison
-/* Lexer */
-%lex
-%%
-\s+                   { /* skip whitespace */; }
-[0-9]+                { return 'NUMBER';       }
-"**"                  { return 'OP';           }
-[-+*/]                { return 'OP';           }
-<<EOF>>               { return 'EOF';          }
-.                     { return 'INVALID';      }
-/lex
+Como en los dos casos anteriores, comenzamos en orden ascendente de izquierda a derecha, realizando la resta `7-4` (que da como resultado `3`) para posteriormente realizar la división `3/2`. Esto es igual a `1.5`. Sin embargo, el resultado correcto, aplicando precedencia y asociatividad debería ser `7-2 = 5`.
+
+### 4.2 Adición de Tests
+Se añadió un nuevo fichero en el directorio `__tests__` con pruebas de precedencia y asociatividad que fallaron, confirmando que nuestra gramática no funcionaba de la forma que esperábamos.
+
+### 4.3 Modificación y mejora de la gramática
+La gramática se reestructuró, creando distintos niveles para forzar el orden de ejecución de las operaciones matemáticas:
+- Las variables sintáticas `E` y `T` se asocian por la izquierda (por lo que son recursivas por la izquierda), teniendo `T` una mayor precedencia (al generar árboles se encontrará más cerca de los nodos hoja, si no se usan paréntesis).
+- La variable `R`, apodada como _Right_ se asocia por la derecha mediante recursividad por la derecha y se utiliza para las potencias.
+- La variable `F` es la que tiene mayor precedencia, pues corresponde a los números terminales.
+
+Las reglas que se implementaron fueron:
+```bison
+expressions : expression EOF        { return $expression; };
+
+expression  : expression OPAD term  { $$ = operate($OPAD, $expression, $term); }
+            | term                  { $$ = $term; };
+
+term        : term OPMU right       { $$ = operate($OPMU, $term, $right); }
+            | right                 { $$ = $right; };
+
+right       : factor OPOW right     { $$ = operate($OPOW, $factor, $right); }
+            | factor                { $$ = $factor; };
+
+factor      : NUMBER                { $$ = Number(yytext); };
 ```
-### 1. Describa la diferencia entre `/* skip whitespace */` y devolver un *token*
-Una de las acciones que realiza el analizador léxico (lexer) es ignorar los espacios en blanco. Por ese motivo, cuando detecta el patrón \s+ no devuelve ningún token, simplemente pasa a analizar el siguiente. Por el contrario, en el resto de definiciones regulares, se identifica un lexema y se devuelve un token, que el analizador sintáctico utilizará.   
 
-### 2. Escriba la secuencia exacta de tokens producidos para la entrada `123**45+@`.
-NUMBER - OP - NUMBER - OP - INVALID - EOF
-
-### 3. Indique por qué `**` debe aparecer antes que [-+*/].
-Cuando el analizador léxico comprueba un caracter, verifica cada una de las definiciones regulares de forma secuencial. Si la definición [-+*/], que indica que si se encuentra cualquiera de los caracteres entre corchetes se devuelva el token OP, estuviera primero, cada vez que se encontrara un asterisco el lexer lo interpretaría como dicho operando y no analizaría si luego hay otro asterisco (que indica la presencia de un operador diferente).
-
-Esta es una característica del lexer de Jison, donde el estado de aceptación es el de la expresión que [aparece primero](https://gerhobbelt.github.io/jison/docs/#lexical-analysis) en el fichero. En otros lexers se utiliza la regla de la cadena más larga (se puede configurar en Jison) que en este caso haría que el orden fuera indiferente.
-
-### 4. Explique cuándo se devuelve `EOF`.
-El token EOF se devuelve cuando se detecta el final de la entrada, esto es, que ya no se deben analizar más lexemas. Esto ayuda al lexer a conocer el final de un archivo, devolviendo al analizador sintáctico el token de fin de archivo. Además, ayuda al analizador sintáctico a saber que ya la entrada que se esperaba finalizó.
-
-### 5. Explique por qué existe la regla `.` que devuelve **INVALID**
-La regla `.` es necesaria para asegurarnos de que todos los caracteres que no son los que nosotros esperamos sean considerados como inválidos. Esto es esencial en la gestión de errores, pues son caracteres que no pertenecen al alfabeto de nuestra gramática y por lo tanto no encajan en ninguna de nuestras definiciones regulares. 
+### 4.4 Incorporación de expresiones entre paréntesis
+Se incluyeron los tokens `(` y `)` junto a la regla `F -> '(' expression ')'    { $$ = $expression; }` para asegurar que cualquier expresión contenida entre paréntesis sea evaluada antes de interactuar con operadores que estén fuera del paréntesis. 
 
 ---
 
 ## 5. Resultados
-- El proyecto se ha configurado correctamente
-- Se ha respondido de forma satisfactoria a las preguntas planteadas sobre el fragmento de código.
-- Se ha añadido la capacidad de ignorar comentarios de una sola línea al analizador sintáctico (el analizador léxico no devuelve token)
-- Se ha añadido la posibilidad de realizar operaciones con números en punto flotante.
-- Se han implementado numerosas pruebas que verifican el correcto funcionamiento de lo ya mencionado.
+- Se ha entendido por qué era necesario modificar la gramática y en que casos el resultado no era el esperado.
+- Se ha logrado mejorar la gramática incluyendo reglas de producción que corregían la precedencia y la asociatividad.
+- Se ha añadido la capacidad de utilizar paréntesis.
+- Se han superado todas las pruebas implementadas que verificaban el correcto funcionamiento de la gramática.
