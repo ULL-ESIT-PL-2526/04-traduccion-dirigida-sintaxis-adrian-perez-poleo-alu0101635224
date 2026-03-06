@@ -11,6 +11,8 @@ exponente [eE][+-]?[0-9]+
 "**"                                  { return 'OPOW';                }
 [-+]                                  { return 'OPAD';                }
 [*/]                                  { return 'OPMU';                }
+"("                                   { return '(';                   }
+")"                                   { return ')';                   }
 <<EOF>>                               { return 'EOF';                 }
 .                                     { return 'INVALID';             }
 /lex
@@ -49,6 +51,8 @@ right
 factor
     : NUMBER
         { $$ = Number(yytext); }
+    | '(' expression ')'
+        { $$ = $expression; }
     ;
 %%
 
