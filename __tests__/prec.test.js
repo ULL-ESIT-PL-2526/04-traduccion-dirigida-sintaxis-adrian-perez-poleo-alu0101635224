@@ -138,3 +138,12 @@ describe('Parentheses Tests', () => {
     });
 });
 });
+
+
+describe('Factorial Tests', () => {
+
+  test('Factorial correctly detected', () => {
+    expect(parse("3!")).toBe(6);
+  })
+
+})
