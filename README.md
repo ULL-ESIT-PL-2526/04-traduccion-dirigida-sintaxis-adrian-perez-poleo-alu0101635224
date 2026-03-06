@@ -110,18 +110,22 @@ La gramática se reestructuró, creando distintos niveles para forzar el orden d
 
 Las reglas que se implementaron fueron:
 ```bison
-L -> E eof       { $$ = $1; }
-E -> E opad T    { $$ = operate($2, $1, $3); }
-   | T           { $$ = $1; }
-T -> T opmu R    { $$ = operate($2, $1, $3); }
-   | R           { $$ = $1; }
-R -> F opow R    { $$ = operate($2, $1, $3); }
-   | F           { $$ = $1; }
-F -> NUMBER      { $$ = convert($1); }
+expressions : expression EOF        { return $expression; };
+
+expression  : expression OPAD term  { $$ = operate($OPAD, $expression, $term); }
+            | term                  { $$ = $term; };
+
+term        : term OPMU right       { $$ = operate($OPMU, $term, $right); }
+            | right                 { $$ = $right; };
+
+right       : factor OPOW right     { $$ = operate($OPOW, $factor, $right); }
+            | factor                { $$ = $factor; };
+
+factor      : NUMBER                { $$ = Number(yytext); };
 ```
 
 ### 4.4 Incorporación de expresiones entre paréntesis
-Se incluyeron los tokens `(` y `)` junto a la regla `F -> ( E )       { $$ = $2; }` para asegurar que cualquier expresión contenida entre paréntesis sea evaluada antes de interactuar con operadores que estén fuera del paréntesis. 
+Se incluyeron los tokens `(` y `)` junto a la regla `F -> '(' expression ')'    { $$ = $expression; }` para asegurar que cualquier expresión contenida entre paréntesis sea evaluada antes de interactuar con operadores que estén fuera del paréntesis. 
 
 ---
 
