@@ -28,12 +28,13 @@ Esta práctica se enmarca dentro de la asignatura Procesadores de Lenguajes. Su 
 ---
 ## 4. DESARROLLO
 
+### 4.1 Resolución de ejercicios
 En primer lugar, se procede a detallar la derivación de las siguientes frases, junto con su respectivo árbol de análisis sintáctica (_parse tree_). Se han añadido los valores numericos en el árbol con el objetivo de ilustrar con mayor claridad el orden de ejecución de las operaciones.
 - 4.0-2.0*3.0
 - 2\*\*3\*\*2
 - 7-4/2
 
-### Frase número 1: `4.0-2.0*3.0`
+#### Frase número 1: `4.0-2.0*3.0`
 $ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Rightarrow E_1 \text{ op } T \text{ op } T \text{ eof } \Rightarrow T \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } number \text{ eof } $
 
 ```text
@@ -55,7 +56,7 @@ number     2.0
 
 Primero se calcula `4.0 - 2.0` y al resultado, que es `2.0` se le multiplica el `3.0` dando como resultado `6.0`. Vemos que esto es incorrecto, pues el resultado debería ser `-2.0`. 
 
-### Frase número 2: `2**3**2`
+#### Frase número 2: `2**3**2`
 $ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Rightarrow E_1 \text{ op } T \text{ op } T \text{ eof } \Rightarrow T \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } number \text{ eof } $
 
 ```text
@@ -76,7 +77,7 @@ number     3
 ```
 Una vez más, evaluamos de izquierda a derecha de forma ascendente. Primero se realiza `2**3` para posteriormente, operar `8**2` que es `64`. Sin embargo, la operación debería haber sido primero `3**2` para luego elevarlo a `2` resutando en `512`.
 
-### Frase número 3: `7-4/2`
+#### Frase número 3: `7-4/2`
 $ L \Rightarrow E \text{ eof } \Rightarrow E_1 \text{ op } T \text{ eof } \Rightarrow E_1 \text{ op } T \text{ op } T \text{ eof } \Rightarrow T \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } T \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } T \text{ eof } \Rightarrow number \text{ op } number \text{ op } number \text{ eof } $
 
 ```text
@@ -98,11 +99,34 @@ number     4
 
 Como en los dos casos anteriores, comenzamos en orden ascendente de izquierda a derecha, realizando la resta `7-4` (que da como resultado `3`) para posteriormente realizar la división `3/2`. Esto es igual a `1.5`. Sin embargo, el resultado correcto, aplicando precedencia y asociatividad debería ser `7-2 = 5`.
 
+### 4.2 Adición de Tests
+Se añadió un nuevo fichero en el directorio `__tests__` con pruebas de precedencia y asociatividad que fallaron, confirmando que nuestra gramática no funcionaba de la forma que esperábamos.
+
+### 4.3 Modificación y mejora de la gramática
+La gramática se reestructuró, creando distintos niveles para forzar el orden de ejecución de las operaciones matemáticas:
+- Las variables sintáticas `E` y `T` se asocian por la izquierda (por lo que son recursivas por la izquierda), teniendo `T` una mayor precedencia (al generar árboles se encontrará más cerca de los nodos hoja, si no se usan paréntesis).
+- La variable `R`, apodada como _Right_ se asocia por la derecha mediante recursividad por la derecha y se utiliza para las potencias.
+- La variable `F` es la que tiene mayor precedencia, pues corresponde a los números terminales.
+
+Las reglas que se implementaron fueron:
+```bison
+L -> E eof       { $$ = $1; }
+E -> E opad T    { $$ = operate($2, $1, $3); }
+   | T           { $$ = $1; }
+T -> T opmu R    { $$ = operate($2, $1, $3); }
+   | R           { $$ = $1; }
+R -> F opow R    { $$ = operate($2, $1, $3); }
+   | F           { $$ = $1; }
+F -> NUMBER      { $$ = convert($1); }
+```
+
+### 4.4 Incorporación de expresiones entre paréntesis
+Se incluyeron los tokens `(` y `)` junto a la regla `F -> ( E )       { $$ = $2; }` para asegurar que cualquier expresión contenida entre paréntesis sea evaluada antes de interactuar con operadores que estén fuera del paréntesis. 
+
 ---
 
 ## 5. Resultados
-- El proyecto se ha configurado correctamente
-- Se ha respondido de forma satisfactoria a las preguntas planteadas sobre el fragmento de código.
-- Se ha añadido la capacidad de ignorar comentarios de una sola línea al analizador sintáctico (el analizador léxico no devuelve token)
-- Se ha añadido la posibilidad de realizar operaciones con números en punto flotante.
-- Se han implementado numerosas pruebas que verifican el correcto funcionamiento de lo ya mencionado.
+- Se ha entendido por qué era necesario modificar la gramática y en que casos el resultado no era el esperado.
+- Se ha logrado mejorar la gramática incluyendo reglas de producción que corregían la precedencia y la asociatividad.
+- Se ha añadido la capacidad de utilizar paréntesis.
+- Se han superado todas las pruebas implementadas que verificaban el correcto funcionamiento de la gramática.
